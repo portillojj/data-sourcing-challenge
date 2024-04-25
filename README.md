@@ -33,12 +33,26 @@ The starter code includes importing the required dependencies and your API keys 
 
 If you accidentally delete these variables, they are:
 
-![image](files:/C:/Users/porti/OneDrive/Pictures/Screenshots/Challenge_6_image1.png)
+![Alt text][def]
+
+2.  Create an empty list called reviews_list to store the reviews you retrieve from the API.
+
+3. The Article Search API limits results to 10 per page, but we want to try to retrieve 200. To do this, create a for loop to loop through 20 pages (starting from page 0). Inside the loop, perform the following actions:
+    - Extend the query_url created in Step 1 to include the page parameter.
+    - Make a GET request to retrieve the page of results, and store the JSON data in a variable called reviews.
+    - Add a 12-second interval between queries to stay within API query limits.
+
+**Important:** The New York Times limits requests to 500 per day and 5 per minute.
+
+- Write a try-except clause that performs the following actions:
+    -   try: loop through the reviews["response"]["docs"] and append each review to the list, then print out the query page number (i.e. the number of times the loop has executed).
+    -   except: Print the page number that had no results then break from the loop.
+
+> ![NOTE] 
+        > If your loop breaks at the except clause, it is possible you have tried to make a request that fell outside of the rate limit. You should be able to loop through all 20 pages with the provided query parameters.
 
 
-2.  Check that the columns in the two DataFrames have similar names and data types.
 
-3. Combine the two DataFrames by the rows using an inner join, and reset the index.
 
 > [!TIP]
 > **Read over the instructions to determine if you should use concat, join, or merge.**
@@ -137,3 +151,6 @@ Some of the code on this assigment was done with the help of a bootcamp tutor.
 
 ## Footnotes
 Sales Product Data. Available: (https://www.kaggle.com/datasets/knightbearr/sales-product-dataLinks) to an external site.
+
+
+[def]: file/C:/Users/porti/OneDrive/Desktop/data-sourcing-challenge/images/Challenge_6_image1.png
