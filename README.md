@@ -29,7 +29,7 @@ This Challenge has three parts, and must be completed in order:
 The starter code includes importing the required dependencies and your API keys from your .env file, but you will need to ensure your API keys are added to that file.
 
 ## Part 1: Access the New York Times API
-1.  The base URL is included in the starter code, along with the search string and query dates. Consult the New York Times Article Search API documentationLinks to an external site. to help you build your query_url using these variables.
+1. The base URL is included in the starter code, along with the search string and query dates. Consult the New York Times Article Search API documentationLinks to an external site. to help you build your query_url using these variables.
 
 If you accidentally delete these variables, they are:
 
@@ -38,88 +38,137 @@ If you accidentally delete these variables, they are:
 2.  Create an empty list called reviews_list to store the reviews you retrieve from the API.
 
 3. The Article Search API limits results to 10 per page, but we want to try to retrieve 200. To do this, create a for loop to loop through 20 pages (starting from page 0). Inside the loop, perform the following actions:
+
     - Extend the query_url created in Step 1 to include the page parameter.
+
     - Make a GET request to retrieve the page of results, and store the JSON data in a variable called reviews.
+
     - Add a 12-second interval between queries to stay within API query limits.
 
 **Important:** The New York Times limits requests to 500 per day and 5 per minute.
 
 - Write a try-except clause that performs the following actions:
+
     -   try: loop through the reviews["response"]["docs"] and append each review to the list, then print out the query page number (i.e. the number of times the loop has executed).
+
     -   except: Print the page number that had no results then break from the loop.
 
 > ![NOTE] 
-        > If your loop breaks at the except clause, it is possible you have tried to make a request that fell outside of the rate limit. You should be able to loop through all 20 pages with the provided query parameters.
+        > If your loop breaks at the except clause, it is possible you have tried to make a request that fell outside of the rate limit. 
+        > You should be able to loop through all 20 pages with the provided query parameters.
 
 
+4. Preview the first five results in JSON format using json.dumps with the argument indent=4 to format the data.
 
+5. Convert reviews_list to a Pandas DataFrame using json_normalize()
 
-> [!TIP]
-> **Read over the instructions to determine if you should use concat, join, or merge.**
+6. Extract the movie title from the "headline.main" column and save it to a new column "title". To do this, you will use the Pandas apply() method and the following lambda function: 
 
-4. After combining the DataFrames, do the following:
+    - lambda st: st[st.find("\u2018")+1:st.find("\u2019 Review")]
 
-    - Check if there are any null values.
+    This code takes the string in the cell and extracts the characters between the unicode quotation marks, as long as a space and the word "Review" follows the closing quotation mark.
 
-    - Check each column’s data type.
+7. Use the supplied extract_keywords function to convert the "keywords" column from a list of dictionaries to strings using the apply() method.
 
-    - Convert the "invoice_date" column to a datetime data type.
+8. Create a list called titles from the "title" column using to_list(). These titles will be used in the query for The Movie Database.
 
+## Part 2: Access The Movie Database API
 
-## Determine which Region Sold the Most Products
-1. Use either the groupby or pivot_table function to create a multi-index DataFrame with the "region", "state", and "city" columns.
+Consult the [Search & Query for Details documentation](https://developer.themoviedb.org/docs/search-and-query-for-details) to build your query URLs. You will be making both types of requests to extract all of the details you need:
 
-2. Rename the aggregated column to reflect the aggregation of the data in the column.
+- The search query is used to find the movie ID from the search by title. Most of this query is included in your starter code, as follows, but you will need to include the movie title in the query.
 
-3. Sort the results in descending order to show the top five regions, including the state and city that have the greatest number of products sold. Your final table should look like the following image:
+Prepare The Movie Database query
 
+url = "https://api.themoviedb.org/3/search/movie?query="
 
-## Determine which Region had the Most Sales
-1. Use either the groupby or pivot_table function to create a multi-index DataFrame with the "region", "state", and "city" columns.
+tmdb_key_string = "&api_key=" + tmdb_api_key
 
-2. Rename the aggregated column to reflect the aggregation of the data in the column.
+- The movie query is made once you have the movie ID.
 
-3. Sort the results in descending order to show the top five regions, including the state and city that generated the most sales. Your final table should look like the following image:
+You will use the titles list created in Part 1 to perform your queries with The Movie Database.
 
-## Determine which Retailer had the Most Sales
-1. Use either the groupby or pivot_table function to create a multi-index DataFrame with the "retailer", "region", "state", and "city" columns.
+1. Create an empty list called tmdb_movies_list to store the results from your API requests. This will contain a list of dictionaries.
 
-2. Rename the aggregated column to reflect the aggregation of the data in the column.
+2. reate a variable called request_counter and initialize it with the value of 1. This counter should do the following:
 
-3. Sort the results in descending order to show the top five retailers along with their region, state, and city that generated the most sales. Your final table should look like the following image:
+    - Increment by one every time you iterate through the titles list.
 
-## Determine which Retailer Sold the Most Women's Athletic Footwear
-1. Filter the combined DataFrame to create a DataFrame with only women's athletic footwear sales data.
+    - Use time.sleep(1) when it reaches a multiple of 50.
 
-> [!TIP]
-> **Use df[df["column_name"].str.contains("<value>")] or df.loc[(df["column_name"] =="<value>")].**
+    - Print a message to indicate that the application is sleeping.
 
-2. Use either the groupby or pivot_table function to create a multi-index DataFrame with the "retailer", "region", "state", and "city" columns.
+3. Loop through the titles list created from the movie reviews DataFrame, and perform the following actions:
 
-3. Rename the aggregated column to reflect the aggregation of the data in the column.
+    - Perform the actions outlined in Step 2.
 
-4. Sort the results in descending order to show the top five retailers along with their region, state, and city that sold the most women's athletic footwear. Your final table should look like the following image:
+    - Perform a GET request that sends the title to The Movie Database search and retrieves the JSON results.
 
-## Determine the Day with the Most Women's Athletic Footwear Sales
-1. Create a pivot table with the "invoice_date" column as the index and the "total_sales" column as the values parameter.
+    - Use a try clause that performs the following actions:
 
-2. Rename the aggregated column to reflect the aggregation of the data in the column.
+        - Collect the movie ID from the first result.
 
-3. Apply the resample function to the pivot table, place the data into daily bins, and get the total sales for each day.
+        - Make a GET request using the movie query (starting with https://api.themoviedb.org/3/movie/) and movie ID to retrieve the full movie details in JSON format.
 
-4. Sort the resampled DataFrame in descending order to show the top 10 days that generated the most women's athletic footwear sales. Your final table should look like the following image:
+        - Extract the genre names from the results into a list called genres.
 
-## Determine the Week with the Most Women's Athletic Footwear Sales
-1. Apply resample to the pivot table above, place the data into weekly bins, and get the total sales for each week.
+        - Extract the spoken_languages' English name from the results into a list called spoken_languages.
 
-2. Sort the resampled DataFrame in descending order to show the top 10 weeks that generated the most women's athletic footwear sales. Your final table should look like the following image:
+        - Extract the production_countries' name from the results into a list called production_countries.
+
+        - Create a dictionary with the following results: title, original_title, budget, original_language, homepage, overview, popularity, runtime, revenue, release_date, vote_average, vote_count, as well as the genres, spoken_languages, and production_countries lists you just created.
+
+        - Append this dictionary to tmdb_movies_list.
+
+        - Print out the name of the movie and a message to indicate that the title was found.
+
+    - Use the except clause to print out a statement if a movie is not found.
+
+4. Preview the first five results in JSON format using json.dumps with the argument indent=4 to format the data.
+
+5. Convert the results to a DataFrame called tmdb_df with pd.DataFrame(). You don't need to use json_normalize() this time because we don't have nested objects.
+
+## Part 3: Merge and Clean the Data for Export
+Now that you have collected the data from both APIs, you need to merge the two DataFrames and clean the data, then export it for future use.
+
+1. Merge the New York Times reviews and TMDB DataFrames on the title column.
+
+2. The genres, spoken_languages, and production_countries columns were saved as lists, but we want the columns to be strings without the list characters ([, ], and '). To fix these columns, perform the following actions:
+
+    - Create a list of the columns that need fixing called columns_to_fix.
+
+    - Create a list of characters to remove called characters_to_remove.
+
+    - Loop through columns_to_fix and do the following:
+
+        - Use astype() to convert the column to a string.
+
+        - Loop through the characters_to_remove and use the Pandas str.replace() method to remove the character from the string.
+
+    - Print the head of the updated DataFrame to confirm the list characters were removed.
+
+3. Delete any duplicate rows and reset the index.
+
+4. Export data to a CSV file without the DataFrame's index.
 
 ## Hints and Considerations
-- Consider what you've learned so far. You’ve learned how to combine data using concatenation, joins, and merging, and how to reshape data using groupby, pivot, pivot_table, resample, and melt functions.
+- Consider what you've learned so far. This Challenge builds on your Python and Pandas lessons, and you may want to review those activities to recall how to perform an action.
 
-- If you're struggling with how to start, look back on some of the activities you did in class.
+- If you're struggling with how to start, consider writing out the steps of the process using pseudocode.
 
-- Always commit your work and back it up with pushes to GitHub or GitLab. You don't want to lose hours of your hard work! Also make sure that your repo has a detailed README.md file.
+- Remember to debug along the way. If you're unsure whether a section of code is running properly, write some print statements to print out variables or notes to yourself to help you locate the problem. Some common pitfalls that can lead to bugs and errors include:
+
+    - Your environment variables are not set up properly.
+
+    - Access is denied due to API key not being properly sent to the API.
+
+    - The query string is not constructed properly.
+
+    - Data within a JSON object is not properly referenced. Try printing the JSON object using json.dumps() and indent=4 to check the structure.
+
+    - Before creating a loop, ensure you can perform the actions you want to perform on a single item. 
+
+-Always commit your work and back it up with pushes to GitHub or GitLab. You don't want to lose hours of hard work! Also make sure that your repo has a detailed README.md file.
 
 ## Badges
 
@@ -128,7 +177,7 @@ If you accidentally delete these variables, they are:
 ## Installation
 
 ## Usage
-This assigment highlights the usage of groupby and pivot table functions for analyzing sales information for athletic apparel sales in the United States.
+This assigment highlights the usage of APIs and Panda dataframes for collect data information from multiple websites.
 
 ## Support
 Some of the code on this assigment was done with the help of a bootcamp tutor.
@@ -138,19 +187,20 @@ Some of the code on this assigment was done with the help of a bootcamp tutor.
 ## Contributing
 
 ## Authors and acknowledgment
-1. Code generated with the assistance of Vijaya (@Bootcamp Tutor)
+1. Code generated with the assistance of Saad Khan (@Bootcamp Tutor)
 2. Reference material - [PEP 8 – Style Guide for Python Code](https://peps.python.org/pep-0008/)
 3. Python HOWTOs - [https://docs.python.org/3/howto](https://docs.python.org/3/howto/index.html)
-4. This site was built using [GitHub Pages](https://pages.github.com/).
+4. TMDB Documentation - [TMDB Documentation](https://developer.themoviedb.org/docs/search-and-query-for-details) 
+5. NY Times Information - [NYT Documentation](https://developer.nytimes.com/docs/articlesearch-product/1/overview)
+6. Pandas User Guide - [Pandas User Guide](https://pandas.pydata.org/docs/user_guide/index.html)
+7. This site was built using [GitHub Pages](https://pages.github.com/).
+
 
 ## License
 
 
 ## Project status
-- Submitted for grading (04.18.2024)
+- Submitted for grading (04.25.2024)
 
 ## Footnotes
-Sales Product Data. Available: (https://www.kaggle.com/datasets/knightbearr/sales-product-dataLinks) to an external site.
 
-
-[def]: file/C:/Users/porti/OneDrive/Desktop/data-sourcing-challenge/images/Challenge_6_image1.png
